@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #0d0d0d, #3d4141);
+            color: #333;
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(to right, #161617, #37393c);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .container {
+            display: flex;
+            flex-grow: 1;
+            margin-top: 5rem;
+        }
+
+        .graph-container {
+            flex: 2;
+            margin: 1rem;
+            padding: 1rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .dashboard {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .stock-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .stock-card h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .stock-card p {
+            margin: 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .price {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .positive {
+            color: #4caf50;
+        }
+
+        .negative {
+            color: #f44336;
+        }
+
+        .error-message {
+            text-align: center;
+            color: #f44336;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Stock Market Dashboard
+    </header>
+
+    <div class="container">
+        <div class="graph-container">
+            <h2 id="graphTitle">Stock Graph for AAPL</h2>
+            <canvas id="stockGraph" width="600" height="400"></canvas>
+        </div>
+
+        <div class="dashboard" id="dashboard">
+          
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const stocks = [
+            { symbol: 'AAPL', price: 150.12, change: 2.34, changePercent: '1.58%', data: [140, 145, 150, 155, 160, 158, 162, 165, 170, 168, 172, 175], color: "#4caf50" },
+            { symbol: 'MSFT', price: 310.45, change: -1.25, changePercent: '-0.40%', data: [305, 308, 310, 315, 320, 318, 319, 322, 325, 328, 330, 333], color: "#2196f3" },
+            { symbol: 'GOOGL', price: 2750.65, change: 15.78, changePercent: '0.58%', data: [2700, 2725, 2750, 2775, 2800, 2790, 2805, 2810, 2825, 2830, 2850, 2870], color: "#ff9800" },
+            { symbol: 'TSLA', price: 685.20, change: -12.34, changePercent: '-1.77%', data: [700, 695, 690, 685, 680, 675, 670, 668, 665, 660, 658, 655], color: "#f44336" },
+            {symbol: 'AMZN', price: 1700.65, change: 12.78, changePercent: '0.78%', data: [1700, 1770, 1800, 1850, 1920, 1950, 2020, 2050, 2100, 2150, 2200], color: "#ff9800" }
+        ];
+
+        const dashboard = document.getElementById('dashboard');
+        const graphTitle = document.getElementById('graphTitle');
+
+        // Chart instance
+        let chart;
+
+        function createStockCard(stock) {
+            const card = document.createElement('div');
+            card.className = 'stock-card';
+            card.innerHTML = `
+                <h3>${stock.symbol}</h3>
+                <p class="price">$${stock.price.toFixed(2)}</p>
+                <p class="${stock.change >= 0 ? 'positive' : 'negative'}">
+                    ${stock.change.toFixed(2)} (${stock.changePercent})
+                </p>
+            `;
+            card.addEventListener('click', () => updateGraph(stock));
+            dashboard.appendChild(card);
+        }
+
+        function loadDashboard() {
+            if (stocks.length === 0) {
+                dashboard.innerHTML = '<p class="error-message">No stock data available.</p>';
+            } else {
+                stocks.forEach(stock => createStockCard(stock));
+            }
+        }
+
+        function updateGraph(stock) {
+            graphTitle.textContent = `Stock Graph for ${stock.symbol}`;
+            const newData = {
+                labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+                datasets: [{
+                    label: `${stock.symbol} Stock Price`,
+                    data: stock.data,
+                    borderColor: stock.color,
+                    backgroundColor: `${stock.color}33`, // Adding slight transparency
+                    tension: 0.3,
+                }]
+            };
+            chart.data = newData;
+            chart.update();
+        }
+
+        // Initial graph setup
+        function initializeGraph() {
+            const ctx = document.getElementById("stockGraph").getContext("2d");
+            const initialData = {
+                labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+                datasets: [{
+                    label: "AAPL Stock Price",
+                    data: [140, 145, 150, 155, 160, 158, 162, 165, 170, 168, 172, 175],
+                    borderColor: "#4caf50",
+                    backgroundColor: "#4caf5033",
+                    tension: 0.3,
+                }]
+            };
+
+            const config = {
+                type: "line",
+                data: initialData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: "top",
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: "Month"
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: "Price (in USD)"
+                            }
+                        }
+                    }
+                }
+            };
+
+            chart = new Chart(ctx, config);
+        }
+
+        loadDashboard();
+        initializeGraph();
+    </script>
+</body>
+</html>
